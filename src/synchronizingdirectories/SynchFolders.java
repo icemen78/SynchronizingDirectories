@@ -11,6 +11,8 @@
 */
 package synchronizingdirectories;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -57,8 +59,10 @@ public class SynchFolders implements Runnable{
     private boolean sinchFlag = false;
     private TreeSet files;
     private TreeSet ferrors;
-    private BufferedReader rbuffSource, rbuffTarget;
-    private BufferedWriter wbuffSource, wbuffTarget;
+    private BufferedInputStream rbuffSource, rbuffTarget;
+    private BufferedOutputStream wbuffSource, wbuffTarget;
+    
+    private static final int BUFFER_SIZE = 8388608;
     
     public SynchFolders(File dirSource, File dirTarget, int typeSinch) throws Exception{
         if ((!dirSource.exists() || !dirTarget.exists()) || (dirSource.isFile() || dirTarget.isFile())) {
@@ -188,20 +192,19 @@ public class SynchFolders implements Runnable{
                         copyFObject(fe.getSourceFObj(),fe.getDistanceDir());
                         break;
                     case FileEntry.FE_MAST_REPLACE:
+                        System.out.println(fe.toString() + " (замена)");
+                        File source = fe.getSourceFObj();
+                        File distance = new File (fe.getDistanceDir()+File.separator+source.getName());
+                        distance.createNewFile();
                         //заменяем файлы
                         FileInputStream fis = null;
                         FileOutputStream fos = null;
+                        byte[] buffer = new byte[BUFFER_SIZE];
+                        int bytesCopied;
                         try {
-                            File source = fe.getSourceFObj();
-                            File distance = new File (fe.getDistanceDir()+File.separator+source.getName());
-                            distance.createNewFile();
                             fis = new FileInputStream(source);
                             fos = new FileOutputStream(distance);
-                            int i = fis.read();
-                            while (i>=0) {
-                                fos.write(i);
-                                i = fis.read();
-                            }
+                            while ((bytesCopied = fis.read(buffer)) > 0) {fos.write(buffer, 0, bytesCopied);}
                             fis.close();
                             fos.close();
                             distance.setLastModified(source.lastModified());                            
@@ -227,6 +230,7 @@ public class SynchFolders implements Runnable{
         //sfolder - существующий файловый объект-источник
         //tfolder - существующая родительсткий объект-контейнер
         String newFObjName = tobject.getAbsolutePath()+File.separator+sobject.getName();
+        System.out.println(newFObjName);
         File newFObj = new File(newFObjName);
         if (sobject.isDirectory()) {
             newFObj.mkdir();
@@ -240,14 +244,12 @@ public class SynchFolders implements Runnable{
         }else {
             FileInputStream fis = null;
             FileOutputStream fos = null;
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int bytesCopied;
             try {
                 fis = new FileInputStream(sobject);
                 fos = new FileOutputStream(newFObj);
-                int i;
-                while ((i= fis.read())!=-1) {
-                    fos.write(i);
-                    i = fis.read();
-                }
+                while ((bytesCopied = fis.read(buffer)) > 0) {fos.write(buffer, 0, bytesCopied);}
                 fis.close();
                 fos.close();
             }catch (Exception e) {

@@ -19,6 +19,7 @@ import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.Label;
+import java.awt.Button;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,6 +27,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import static java.lang.Thread.sleep;
+import java.util.Date;
 import java.util.Iterator;
 
 /**
@@ -33,6 +35,7 @@ import java.util.Iterator;
  * @author icemen78
  */
 public class SynchronizingDirectories  extends Frame {
+    public boolean isTesting = true;
     /**
      * @param title
      */
@@ -53,26 +56,47 @@ public class SynchronizingDirectories  extends Frame {
                 
             }
         });
+        Label lTarget = new Label("Целевая дирректория");
+        TextField tfTarget = new TextField(15);
+        lSource.setLocation(50, 50);
+        
+        lSource.setBounds(10, 100, 50, 100);
         add(lSource);
         add(tfSource);
+        add(lTarget);
+        add(tfTarget);
+        
+        Button bSinc = new Button("Синзронизировать");
+        bSinc.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                
+                System.out.println(ae.toString());
+                sinc();
+                //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        });
+        add(bSinc);
 //        FileDialog s = new java.awt.FileDialog(this);
 //        s.gett(FileDialog.LOAD);
 //        s.setVisible(true);
 //        String f = s.getDirectory();
 //        System.out.println(f);
-        setBackground(Color.LIGHT_GRAY);
+//        setBackground(Color.LIGHT_GRAY);
         setSize(640,480);
         init();
         setLocationRelativeTo(null);
         setVisible(true);        
     }
-    public final void init() {
+    
+    public void sinc() {
+        Date sTime = new Date();
         String fileSource="C:\\Temp\\src";
         String fileTarget="C:\\Temp\\target";
-        
+
         File src = new File(fileSource);
         File tgt = new File(fileTarget);
-        
+
         try {
             SynchFolders sf = new SynchFolders(src, tgt, SynchFolders.SF_AGREGATE);
             sf.prepare();
@@ -93,9 +117,15 @@ public class SynchronizingDirectories  extends Frame {
             }
             System.out.println("Синхронизируется объектов: " + sf.getPreparedList().size());
             System.out.println("Количество ошибок: " + sf.getFileErrorsList().size());
+            Date fTime = new Date();
+            System.out.println("Время выполнения (сек): " + ((fTime.getTime()-sTime.getTime())/1000));
         } catch (Exception ex) {
             System.out.println(ex.toString());
         }
+    }
+    
+    public final void init() {
+
     }
     public static void main(String[] args) {
         SynchronizingDirectories mainform = new SynchronizingDirectories("Синхронизация каталогов");
